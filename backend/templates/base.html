@@ -15,7 +15,7 @@
             </div>
             <div class="input-box" onclick="sendFocus()">
                 <img src="{{ url_for('static', filename='images/mag.png') }}" />
-                <input placeholder="Search for a Keeping up with the Kardashians episode" id="filter-text-val" onkeyup="filterText()">
+                <input placeholder="Search for a book" id="filter-text-val" onkeyup="filterText()">
             </div>
         </div>
         <div id="answer-box">
@@ -27,8 +27,8 @@
 
         function answerBoxTemplate(title,titleDesc,rating){
             return `<div class=''>
-                <h3 class='episode-title'>${title}</h3>
-                <p class='episode-desc'>${titleDesc}</p>
+                <h3 class='book_title'>${title}</h3>
+                <p class='plot_summary'>${titleDesc}</p>
                 <p class='episode-rating'>IMDB Rating: ${rating}</p>
             </div>`
         }
