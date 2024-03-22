@@ -14,21 +14,11 @@ for index, row in netflix_db.iterrows():
 i = netflix_db[(netflix_db['type'] == 'MOVIE')]
 netflix_db = netflix_db[(netflix_db['type'] == 'SHOW')]
 netflix_db = netflix_db.drop(netflix_db.columns[[0]], axis = 1)
-netflix_db.to_json('netflix.json', orient ='records')
+netflix_db.to_json('netflix.json', orient ='records', lines = True, indent = 4)
 
-'''parts = ['id','title','type','description','release_year','age_certification','runtime','genres','production_countries','seasons','imdb_id','imdb_score','imdb_votes','tmdb_popularity','tmdb_score']
-
-with open(filename) as fh:
-    for line in fh:
-        desc = line.strip().split(",")
-        print(desc[14])
-        dict2 = {}
-        i = 0
-        while i < len(parts):
-            dict2[parts[i]] = desc[i]
-            i += 1
-        books[desc[3]] = dict2
-'''
-'''out_file = open("test.json", "w")
-json.dump(books, out_file, indent = 4)
-out_file.close()'''
+column_names = ["wikipedia_id", "freebase_id", "book_title","book_author","book_pub_date",
+                "book_genres","plot_summary"]
+cmu_db = pd.read_table("booksummaries.txt", names=column_names)
+cmu_db = cmu_db.drop_duplicates(subset="book_title", ignore_index= True)
+cmu_db = cmu_db.drop(cmu_db.columns[[0, 1]], axis = 1)
+cmu_db.to_json('cmu.json', orient ='records', lines = True, indent = 4)
