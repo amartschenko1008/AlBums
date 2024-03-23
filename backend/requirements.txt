@@ -93,7 +93,7 @@ pytz==2024.1
 pyzmq @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_e6wiufh44w/croot/pyzmq_1686601381524/work
 requests @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_fa2zrx4csg/croot/requests_1690400223595/work
 ruamel.yaml @ file:///Users/ec2-user/ci_py311/ruamel.yaml_1678379291841/work
-scikit-learn==1.3.2
+scikit-learn==1.4.1
 scipy==1.11.3
 six @ file:///tmp/build/80754af9/six_1644875935023/work
 smmap==5.0.0
