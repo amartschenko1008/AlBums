@@ -34,13 +34,13 @@ app = Flask(__name__)
 CORS(app)
 
 # Sample search using json with pandas
-'''def json_search(query):
+def json_search(query):
     matches = []
     merged_df = pd.merge(episodes_df, reviews_df, left_on='id', right_on='id', how='inner')
     matches = merged_df[merged_df['title'].str.lower().str.contains(query.lower())]
     matches_filtered = matches[['title', 'descr', 'imdb_rating']]
     matches_filtered_json = matches_filtered.to_json(orient='records')
-    return matches_filtered_json'''
+    return matches_filtered_json
 
 
 def build_vectorizer(max_features, stop_words, max_df=0.8, min_df=10, norm='l2'):
@@ -77,7 +77,7 @@ def get_sim_book(netflix_title, book_mat):
     similarities = cosine_similarity(netflix_vec, book_mat)
 
     return similarities
-similarities = get_sim_book("Breaking Bad", doc_by_vocab)
+
 
 def book_sims_to_recs(book_sims, book_idx_to_title):
   sim_pairs = [(book_idx_to_title[i], sim) for i, sim in enumerate(book_sims[0])]
@@ -103,6 +103,7 @@ def home():
 @app.route("/episodes")
 def episodes_search():
     text = request.args.get("title")
+    return json_search(text)
     return rec_books(text, doc_by_vocab, book_idx_to_title)
 
 if 'DB_NAME' not in os.environ:
