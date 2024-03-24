@@ -97,17 +97,19 @@ def get_sim_book(netflix_title, book_mat):
 
         similarities = cosine_similarity(netflix_vec, book_mat)
 
+        # print(similarities.shape)
         return similarities
     # TODO Fix this nonsense
     else:
-        return book_mat[0]
+        return book_mat
 
 
 def book_sims_to_recs(book_sims, book_idx_to_title):
     # assert book_sims is not None
-    print(book_sims.shape)
-    sim_pairs = [(book_idx_to_title[i], sim) for i, sim in enumerate(book_sims)]
+    # print(f"{book_sims.shape=}")
+    sim_pairs = [(book_idx_to_title[i], sim) for i, sim in enumerate(book_sims[0])]
     top_5 = sorted(sim_pairs, key=lambda x: x[1], reverse=True)[:5]
+    # print(f"{top_5=}")
     return top_5
 
 
@@ -116,7 +118,9 @@ def rec_books(netflix_title, book_mat, book_idx_to_title):
     similarities = get_sim_book(netflix_title, book_mat)
 
     top_5 = book_sims_to_recs(similarities, book_idx_to_title)
-    top_5_list = [tup[0] for tup in top_5]
+    # top_5_list = [tup[0] for tup in top_5]
+    top_5_list = [tup for tup in top_5]
+    print(f"{top_5_list=}")
     # matches = (book_data[top_5]).to_json(orient="records")
     # print(top_5)
 
