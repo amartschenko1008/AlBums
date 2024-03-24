@@ -67,7 +67,7 @@ def title_idx_maker(db, ind):
     idx_to_title = {}
 
     for index, row in enumerate(db):
-        title_to_idx[row[ind]] = index
+        title_to_idx[row[ind].lower()] = index
         idx_to_title[index] = row[ind]
     return title_to_idx, idx_to_title
 
@@ -91,8 +91,9 @@ query_by_vocab = tfidf_vec.transform(
 
 
 def get_sim_book(netflix_title, book_mat):
-    if netflix_title in netflix_title_to_idx:
-        netflix_idx = netflix_title_to_idx[netflix_title]
+    lower_title = netflix_title.lower()
+    if lower_title in netflix_title_to_idx:
+        netflix_idx = netflix_title_to_idx[lower_title]
         netflix_vec = query_by_vocab[netflix_idx].reshape(1, -1)
 
         similarities = cosine_similarity(netflix_vec, book_mat)
@@ -104,20 +105,23 @@ def get_sim_book(netflix_title, book_mat):
         return book_mat
 
 
-def book_sims_to_recs(book_sims, book_idx_to_title):
+def book_sims_to_recs(book_sims, book_idx_to_title, book_mat):
     # assert book_sims is not None
     # print(f"{book_sims.shape=}")
-    sim_pairs = [(book_idx_to_title[i], sim) for i, sim in enumerate(book_sims[0])]
-    top_5 = sorted(sim_pairs, key=lambda x: x[1], reverse=True)[:5]
-    # print(f"{top_5=}")
-    return top_5
+    if np.array_equal(book_sims, book_mat):
+        return [("This title is not in our database.", None)]
+    else:
+        sim_pairs = [(book_idx_to_title[i], sim) for i, sim in enumerate(book_sims[0])]
+        top_5 = sorted(sim_pairs, key=lambda x: x[1], reverse=True)[:5]
+        # print(f"{top_5=}")
+        return top_5
 
 
 def rec_books(netflix_title, book_mat, book_idx_to_title):
     assert book_mat is not None and book_idx_to_title is not None
     similarities = get_sim_book(netflix_title, book_mat)
 
-    top_5 = book_sims_to_recs(similarities, book_idx_to_title)
+    top_5 = book_sims_to_recs(similarities, book_idx_to_title, book_mat)
     # top_5_list = [tup[0] for tup in top_5]
     top_5_list = [tup for tup in top_5]
     print(f"{top_5_list=}")
