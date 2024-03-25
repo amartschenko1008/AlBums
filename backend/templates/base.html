@@ -41,7 +41,7 @@
 
         function filterText(event) {
             if (event.key === 'Enter' || event.keyCode === 13) {
-                document.getElementById("answer-box").innerHTML = ""
+                document.getElementById("answer-box").innerHTML = "--- Recommended Books ---"
                 //console.log(document.getElementById("filter-text-val").value)
                 fetch("/episodes?" + new URLSearchParams({ title: document.getElementById("filter-text-val").value }).toString())
                     .then((response) => response.json())
