@@ -90,19 +90,21 @@ query_by_vocab = tfidf_vec.transform(
 ).toarray()
 
 
-def get_sim_book(netflix_title, book_mat):
-    lower_title = netflix_title.lower()
-    if lower_title in netflix_title_to_idx:
-        netflix_idx = netflix_title_to_idx[lower_title]
-        netflix_vec = query_by_vocab[netflix_idx].reshape(1, -1)
-
-        similarities = cosine_similarity(netflix_vec, book_mat)
-
-        # print(similarities.shape)
-        return similarities
-    # TODO Fix this nonsense
-    else:
-        return book_mat
+def get_sim_book(netflix_titles,book_mat):
+    lower_titles=[a.lower() for a in netflix_titles]
+    netflix_vectors=[]
+    for lower_title in lower_titles:
+        if lower_title in netflix_title_to_idx:
+            netflix_idx = netflix_title_to_idx[lower_title]
+            netflix_vec = query_by_vocab[netflix_idx].reshape(1, -1)
+            netflix_vectors.append(netflix_vec)
+      # TODO Fix this nonsense
+        else:
+            return book_mat
+    avg_vector = np.mean(netflix_vectors, axis=0)
+    similarities = cosine_similarity(avg_vector, book_mat)
+    # print(similarities.shape)
+    return similarities
 
 
 def book_sims_to_recs(book_sims, book_idx_to_title, book_mat):
@@ -143,9 +145,14 @@ def home():
 
 @app.route("/episodes")
 def episodes_search():
-    text = request.args.get("title")
+    text1 = request.args.get("title1")
+    text2 = request.args.get("title2")
+    text3 = request.args.get("title3")
+    print(f"{text1=}, {text2=}, {text3=}")
+    titles = [text1, text2, text3]
+    titles = [a for a in titles if a != None]
     """return json_search(text)"""
-    return rec_books(text, doc_by_vocab, book_idx_to_title)
+    return rec_books(titles, doc_by_vocab, book_idx_to_title)
 
 
 if "DB_NAME" not in os.environ:

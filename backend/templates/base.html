@@ -13,9 +13,19 @@
                 <h1 id="google-0-2">Show</h1>
                 <h1 id="google-3">Book</h1>
             </div>
-            <div class="input-box" onclick="sendFocus()">
+            <div class="input-box" onclick="sendFocus1()">
                 <img src="{{ url_for('static', filename='images/mag.png') }}" />
-                <input placeholder="Search for a Netflix show or movie..." id="filter-text-val"
+                <input placeholder="Input Your Favourite Netflix Show" id="filter-text-val1"
+                    onkeydown="filterText(event)">
+            </div>
+            <div class="input-box" onclick="sendFocus2()">
+                <img src="{{ url_for('static', filename='images/mag.png') }}" />
+                <input placeholder="Input Your Second Favourite Netflix Show" id="filter-text-val2"
+                    onkeydown="filterText(event)">
+            </div>
+            <div class="input-box" onclick="sendFocus3()">
+                <img src="{{ url_for('static', filename='images/mag.png') }}" />
+                <input placeholder="Input Your Third Favourite Netflix Show" id="filter-text-val3"
                     onkeydown="filterText(event)">
             </div>
         </div>
@@ -33,15 +43,23 @@
             </div>`
         }
 
-        function sendFocus() {
-            document.getElementById('filter-text-val').focus()
+        function sendFocus1() {
+            document.getElementById('filter-text-val1').focus()
+        }
+        function sendFocus2() {
+            document.getElementById('filter-text-val2').focus()
+        }
+        function sendFocus3() {
+            document.getElementById('filter-text-val3').focus()
         }
 
         function filterText(event) {
             if (event.key === 'Enter' || event.keyCode === 13) {
                 document.getElementById("answer-box").innerHTML = "--- Recommended Books ---"
                 //console.log(document.getElementById("filter-text-val").value)
-                fetch("/episodes?" + new URLSearchParams({ title: document.getElementById("filter-text-val").value }).toString())
+                fetch("/episodes?" + new URLSearchParams({ title1: document.getElementById("filter-text-val1").value,
+                title2: document.getElementById("filter-text-val2").value,
+                title3: document.getElementById("filter-text-val3").value}).toString())
                     .then((response) => response.json())
                     .then((data) => data.forEach(row => {
 
