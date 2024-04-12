@@ -7,6 +7,8 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.decomposition import TruncatedSVD
+import scipy
 
 
 # ROOT_PATH for linking with all your files.
@@ -75,7 +77,7 @@ def title_idx_maker(db, ind):
 book_title_to_idx, book_idx_to_title = title_idx_maker(book_data, "book_title")
 netflix_title_to_idx, netflix_idx_to_title = title_idx_maker(show_data, "title")
 
-n_feats = 5000
+n_feats = 10000
 doc_by_vocab = np.empty([len(book_data), n_feats])
 tfidf_vec = build_vectorizer(n_feats, "english")
 doc_by_vocab = tfidf_vec.fit_transform(
@@ -89,33 +91,49 @@ query_by_vocab = tfidf_vec.transform(
     [row["description"] for index, row in enumerate(show_data)]
 ).toarray()
 
+n_components = 10
 
-def get_sim_book(netflix_titles,book_mat):
-    lower_titles=[a.lower() for a in netflix_titles]
-    netflix_vectors=[]
+svd = TruncatedSVD(n_components=n_components, n_iter=10, random_state=42)
+trained_svd = svd.fit(doc_by_vocab)
+
+svd_books = trained_svd.transform(doc_by_vocab)
+svd_netflix = trained_svd.transform(query_by_vocab)
+
+compressed_terms = trained_svd.components_.T
+
+
+def get_sim_book(netflix_titles, book_mat):
+    # if input is empty, replace input with a string
+    if not netflix_titles:
+        netflix_titles = [""]
+    lower_titles = [a.lower() for a in netflix_titles]
+    netflix_vectors = []
     for lower_title in lower_titles:
         if lower_title in netflix_title_to_idx:
             netflix_idx = netflix_title_to_idx[lower_title]
-            netflix_vec = query_by_vocab[netflix_idx].reshape(1, -1)
+            netflix_vec = svd_netflix[netflix_idx]
             netflix_vectors.append(netflix_vec)
-      # TODO Fix this nonsense
         else:
-            return book_mat
-    avg_vector = np.mean(netflix_vectors, axis=0)
+            # If title not in DB, search for those terms instead
+            tf_idf_query = scipy.sparse.csr_matrix.toarray(
+                tfidf_vec.transform([lower_title])
+            )
+            query_vec = trained_svd.transform(tf_idf_query).reshape(
+                n_components,
+            )
+            print(f"{query_vec.shape=}")
+            netflix_vectors.append(query_vec)
+    avg_vector = np.mean(netflix_vectors, axis=0).reshape(1, -1)
     similarities = cosine_similarity(avg_vector, book_mat)
-    # print(similarities.shape)
     return similarities
 
 
 def book_sims_to_recs(book_sims, book_idx_to_title, book_mat):
-    # assert book_sims is not None
-    # print(f"{book_sims.shape=}")
     if np.array_equal(book_sims, book_mat):
         return [("This title is not in our database.", None)]
     else:
         sim_pairs = [(book_idx_to_title[i], sim) for i, sim in enumerate(book_sims[0])]
         top_5 = sorted(sim_pairs, key=lambda x: x[1], reverse=True)[:5]
-        # print(f"{top_5=}")
         return top_5
 
 
@@ -152,7 +170,7 @@ def episodes_search():
     titles = [text1, text2, text3]
     titles = [a for a in titles if a != None]
     """return json_search(text)"""
-    return rec_books(titles, doc_by_vocab, book_idx_to_title)
+    return rec_books(titles, svd_books, book_idx_to_title)
 
 
 if "DB_NAME" not in os.environ:
