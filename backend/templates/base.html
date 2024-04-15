@@ -40,7 +40,9 @@
             return `<div class=''>
                 <h3 class='episode-title'>Title: ${title}</h3>
                 <p class='episode-desc'>Similarity: ${titleDesc}</p>
+                <p class='episode-desc'>Summary: ${rating}</p>
             </div>`
+
         }
 
         function sendFocus1() {
@@ -65,7 +67,7 @@
 
                         let tempDiv = document.createElement("div")
                         //tempDiv.innerHTML = answerBoxTemplate(row.title, row.descr, row.imdb_rating)
-                        tempDiv.innerHTML = answerBoxTemplate(row[0], row[1])
+                        tempDiv.innerHTML = answerBoxTemplate(row[0], row[1], row[2])
                         document.getElementById("answer-box").appendChild(tempDiv)
                     }));
             }

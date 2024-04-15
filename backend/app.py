@@ -134,6 +134,7 @@ def book_sims_to_recs(book_sims, book_idx_to_title, book_mat):
     else:
         sim_pairs = [(book_idx_to_title[i], sim) for i, sim in enumerate(book_sims[0])]
         top_5 = sorted(sim_pairs, key=lambda x: x[1], reverse=True)[:5]
+        top_5 = [(t[0],t[1],book_data[book_title_to_idx[t[0].lower()]]["plot_summary"]) for t in top_5]
         return top_5
 
 
