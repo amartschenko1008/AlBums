@@ -6,6 +6,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Kanit&family=Montserrat&family=Open+Sans:wght@500&display=swap"
     rel="stylesheet">
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
+</script>
+
 <body>
     <div class="full-body-container">
         <div class="top-text">
@@ -36,11 +39,12 @@
 
     <script>
 
-        function answerBoxTemplate(title, titleDesc, rating) {
+        function answerBoxTemplate(title, similarity, summary, chart_num) {
             return `<div class=''>
                 <h3 class='episode-title'>Title: ${title}</h3>
-                <p class='episode-desc'>Similarity: ${titleDesc}</p>
-                <p class='episode-desc'>Summary: ${rating}</p>
+                <p class='episode-desc'>Similarity: ${similarity}</p>
+                <p class='episode-desc'>Summary: ${summary}</p>
+                <canvas id="radar-chart-${chart_num}" style="width:100%;max-width500:"></canvas>
             </div>`
 
         }
@@ -59,16 +63,42 @@
             if (event.key === 'Enter' || event.keyCode === 13) {
                 document.getElementById("answer-box").innerHTML = "--- Recommended Books ---"
                 //console.log(document.getElementById("filter-text-val").value)
-                fetch("/episodes?" + new URLSearchParams({ title1: document.getElementById("filter-text-val1").value,
-                title2: document.getElementById("filter-text-val2").value,
-                title3: document.getElementById("filter-text-val3").value}).toString())
+                fetch("/episodes?" + new URLSearchParams({
+                    title1: document.getElementById("filter-text-val1").value,
+                    title2: document.getElementById("filter-text-val2").value,
+                    title3: document.getElementById("filter-text-val3").value
+                }).toString())
                     .then((response) => response.json())
                     .then((data) => data.forEach(row => {
 
                         let tempDiv = document.createElement("div")
                         //tempDiv.innerHTML = answerBoxTemplate(row.title, row.descr, row.imdb_rating)
-                        tempDiv.innerHTML = answerBoxTemplate(row[0], row[1], row[2])
+                        tempDiv.innerHTML = answerBoxTemplate(row[0], row[1], row[2], row[4])
                         document.getElementById("answer-box").appendChild(tempDiv)
+                        new Chart(document.getElementById("radar-chart-" + row[4]), {
+                            type: 'radar',
+                            data: {
+                                labels: ["Epic", "Violent", "Historical", "Regal", "Sneaky", "Dramatic", "Miserable", "Hopeful", "Contemplative", "Mysterious"],
+                                datasets: [
+                                    {
+                                        label: row[0],
+                                        fill: true,
+                                        backgroundColor: "rgba(179,181,198,0.2)",
+                                        borderColor: "rgba(179,181,198,1)",
+                                        pointBorderColor: "#fff",
+                                        pointBackgroundColor: "rgba(179,181,198,1)",
+                                        data: row[3]
+                                    }
+                                ]
+                            },
+                            options: {
+                                title: {
+                                    display: false,
+                                    text: 'Distribution in % of world population'
+                                }
+
+                            }
+                        });
                     }));
             }
         }

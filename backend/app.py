@@ -10,6 +10,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import TruncatedSVD
 import scipy
 import plotly.express as px
+from sklearn.preprocessing import MinMaxScaler
 
 
 # ROOT_PATH for linking with all your files.
@@ -100,7 +101,12 @@ trained_svd = svd.fit(doc_by_vocab)
 svd_books = trained_svd.transform(doc_by_vocab)
 svd_netflix = trained_svd.transform(query_by_vocab)
 
+zero_to_1_scaler = MinMaxScaler().fit(svd_books)
+
+normalized_book_mat = zero_to_1_scaler.transform(svd_books)
+
 compressed_terms = trained_svd.components_.T
+
 
 def get_sim_book(netflix_titles, book_mat):
     # if input is empty, replace input with a string
@@ -132,9 +138,24 @@ def book_sims_to_recs(book_sims, book_idx_to_title, book_mat):
     if np.array_equal(book_sims, book_mat):
         return [("This title is not in our database.", None)]
     else:
-        sim_pairs = [(book_idx_to_title[i], sim) for i, sim in enumerate(book_sims[0])]
-        top_5 = sorted(sim_pairs, key=lambda x: x[1], reverse=True)[:5]
-        top_5 = [(t[0],t[1],book_data[book_title_to_idx[t[0].lower()]]["plot_summary"]) for t in top_5]
+        # sim_pairs = [(book_idx_to_title[i], sim) for i, sim in enumerate(book_sims[0])]
+        title_sim_vec = [
+            (book_idx_to_title[i], sim, normalized_book_mat[i].tolist())
+            for i, sim in enumerate(book_sims[0])
+        ]
+        # top_5 = sorted(sim_pairs, key=lambda x: x[1], reverse=True)[:5]
+        top_5 = sorted(title_sim_vec, key=lambda x: x[1], reverse=True)[:5]
+        # Title, sim, summary, vector, ranking
+        top_5 = [
+            (
+                t[0],
+                t[1],
+                book_data[book_title_to_idx[t[0].lower()]]["plot_summary"],
+                t[2],
+                idx,
+            )
+            for idx, t in enumerate(top_5)
+        ]
         return top_5
 
 
@@ -142,10 +163,10 @@ def rec_books(netflix_title, book_mat, book_idx_to_title):
     assert book_mat is not None and book_idx_to_title is not None
     similarities = get_sim_book(netflix_title, book_mat)
     top_5 = book_sims_to_recs(similarities, book_idx_to_title, book_mat)
-    '''df= pd.DataFrame(dict( r = similarities.tolist(), theta = ["secrecy", "destruction", "contemporary", "government", "family", "magic", "morality", "travel"]))
+    """df= pd.DataFrame(dict( r = similarities.tolist(), theta = ["secrecy", "destruction", "contemporary", "government", "family", "magic", "morality", "travel"]))
     fig = px.line_polar(df, r='r', theta = 'theta', line_closed=True)
     fig.update_traces(fill='toself')
-    fig.show()'''
+    fig.show()"""
     # top_5_list = [tup[0] for tup in top_5]
     top_5_list = [tup for tup in top_5]
     print(f"{top_5_list=}")
