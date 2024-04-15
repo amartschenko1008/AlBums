@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import TruncatedSVD
 import scipy
+import plotly.express as px
 
 
 # ROOT_PATH for linking with all your files.
@@ -101,7 +102,6 @@ svd_netflix = trained_svd.transform(query_by_vocab)
 
 compressed_terms = trained_svd.components_.T
 
-
 def get_sim_book(netflix_titles, book_mat):
     # if input is empty, replace input with a string
     if not netflix_titles:
@@ -141,8 +141,11 @@ def book_sims_to_recs(book_sims, book_idx_to_title, book_mat):
 def rec_books(netflix_title, book_mat, book_idx_to_title):
     assert book_mat is not None and book_idx_to_title is not None
     similarities = get_sim_book(netflix_title, book_mat)
-
     top_5 = book_sims_to_recs(similarities, book_idx_to_title, book_mat)
+    '''df= pd.DataFrame(dict( r = similarities.tolist(), theta = ["secrecy", "destruction", "contemporary", "government", "family", "magic", "morality", "travel"]))
+    fig = px.line_polar(df, r='r', theta = 'theta', line_closed=True)
+    fig.update_traces(fill='toself')
+    fig.show()'''
     # top_5_list = [tup[0] for tup in top_5]
     top_5_list = [tup for tup in top_5]
     print(f"{top_5_list=}")
