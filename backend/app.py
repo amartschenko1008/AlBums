@@ -93,7 +93,7 @@ query_by_vocab = tfidf_vec.transform(
     [row["description"] for index, row in enumerate(show_data)]
 ).toarray()
 
-n_components = 10
+n_components = 100
 
 svd = TruncatedSVD(n_components=n_components, n_iter=10, random_state=42)
 trained_svd = svd.fit(doc_by_vocab)
@@ -104,6 +104,8 @@ svd_netflix = trained_svd.transform(query_by_vocab)
 zero_to_1_scaler = MinMaxScaler().fit(svd_books)
 
 normalized_book_mat = zero_to_1_scaler.transform(svd_books)
+normalized_netflix_mat = zero_to_1_scaler.transform(svd_netflix)
+
 
 compressed_terms = trained_svd.components_.T
 
@@ -113,11 +115,38 @@ def get_sim_book(netflix_titles, book_mat):
     if not netflix_titles:
         netflix_titles = [""]
     lower_titles = [a.lower() for a in netflix_titles]
-    netflix_vectors = []
+
+    # These vectors are used to generate charts.
+    netflix_vectors_for_graphs = []
     for lower_title in lower_titles:
         if lower_title in netflix_title_to_idx:
             netflix_idx = netflix_title_to_idx[lower_title]
-            netflix_vec = svd_netflix[netflix_idx]
+            netflix_vec = normalized_netflix_mat[netflix_idx]
+            netflix_vectors_for_graphs.append(netflix_vec)
+        else:
+            # If title not in DB, search for those terms instead
+            tf_idf_query = scipy.sparse.csr_matrix.toarray(
+                tfidf_vec.transform([lower_title])
+            )
+            query_vec = trained_svd.transform(tf_idf_query).reshape(
+                n_components,
+            )
+
+            normalized_query_vec = zero_to_1_scaler.transform(query_vec.reshape(1, -1))
+            normalized_query_vec = normalized_query_vec.reshape(
+                n_components,
+            )
+
+            netflix_vectors_for_graphs.append(normalized_query_vec)
+
+    # These vectors are used for calculating similarity
+    netflix_vectors = []
+    for lower_title in lower_titles:
+        if lower_title == "":
+            pass
+        elif lower_title in netflix_title_to_idx:
+            netflix_idx = netflix_title_to_idx[lower_title]
+            netflix_vec = normalized_netflix_mat[netflix_idx]
             netflix_vectors.append(netflix_vec)
         else:
             # If title not in DB, search for those terms instead
@@ -127,14 +156,36 @@ def get_sim_book(netflix_titles, book_mat):
             query_vec = trained_svd.transform(tf_idf_query).reshape(
                 n_components,
             )
-            print(f"{query_vec.shape=}")
-            netflix_vectors.append(query_vec)
+
+            normalized_query_vec = zero_to_1_scaler.transform(query_vec.reshape(1, -1))
+            normalized_query_vec = normalized_query_vec.reshape(
+                n_components,
+            )
+
+            netflix_vectors.append(normalized_query_vec)
+
+    print(f"\n{netflix_vectors=}\n")
+
     avg_vector = np.mean(netflix_vectors, axis=0).reshape(1, -1)
     similarities = cosine_similarity(avg_vector, book_mat)
-    return similarities
+
+    query_vector_list = []
+    for idx, title in enumerate(lower_titles):
+        if title == "":
+            query_vector_list.append((title, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
+        else:
+            """scaled_query_vec = zero_to_1_scaler.transform(
+                netflix_vectors[idx].reshape(1, -1)
+            ).tolist()[0][:10]
+            query_vector_list.append((title, scaled_query_vec))
+            """
+            query_vector_list.append(
+                (title, netflix_vectors_for_graphs[idx].tolist()[:10])
+            )
+    return similarities, query_vector_list
 
 
-def book_sims_to_recs(book_sims, book_idx_to_title, book_mat):
+def book_sims_to_recs(book_sims, book_idx_to_title, book_mat, query_vector_list):
     if np.array_equal(book_sims, book_mat):
         return [("This title is not in our database.", None)]
     else:
@@ -145,31 +196,35 @@ def book_sims_to_recs(book_sims, book_idx_to_title, book_mat):
         ]
         # top_5 = sorted(sim_pairs, key=lambda x: x[1], reverse=True)[:5]
         top_5 = sorted(title_sim_vec, key=lambda x: x[1], reverse=True)[:5]
-        # Title, sim, summary, vector, ranking
+        # Title, sim, summary, vector, ranking, query_vector_list
         top_5 = [
             (
                 t[0],
                 t[1],
                 book_data[book_title_to_idx[t[0].lower()]]["plot_summary"],
-                t[2],
+                t[2][:10],
                 idx,
+                query_vector_list,
             )
             for idx, t in enumerate(top_5)
         ]
+
         return top_5
 
 
 def rec_books(netflix_title, book_mat, book_idx_to_title):
     assert book_mat is not None and book_idx_to_title is not None
-    similarities = get_sim_book(netflix_title, book_mat)
-    top_5 = book_sims_to_recs(similarities, book_idx_to_title, book_mat)
+    similarities, query_vector_list = get_sim_book(netflix_title, book_mat)
+    top_5 = book_sims_to_recs(
+        similarities, book_idx_to_title, book_mat, query_vector_list
+    )
     """df= pd.DataFrame(dict( r = similarities.tolist(), theta = ["secrecy", "destruction", "contemporary", "government", "family", "magic", "morality", "travel"]))
     fig = px.line_polar(df, r='r', theta = 'theta', line_closed=True)
     fig.update_traces(fill='toself')
     fig.show()"""
     # top_5_list = [tup[0] for tup in top_5]
     top_5_list = [tup for tup in top_5]
-    print(f"{top_5_list=}")
+    # print(f"{top_5_list=}")
     # matches = (book_data[top_5]).to_json(orient="records")
     # print(top_5)
 
@@ -191,11 +246,11 @@ def episodes_search():
     text1 = request.args.get("title1")
     text2 = request.args.get("title2")
     text3 = request.args.get("title3")
-    print(f"{text1=}, {text2=}, {text3=}")
+    # print(f"{text1=}, {text2=}, {text3=}")
     titles = [text1, text2, text3]
     titles = [a for a in titles if a != None]
     """return json_search(text)"""
-    return rec_books(titles, svd_books, book_idx_to_title)
+    return rec_books(titles, normalized_book_mat, book_idx_to_title)
 
 
 if "DB_NAME" not in os.environ:

@@ -70,6 +70,7 @@
                 }).toString())
                     .then((response) => response.json())
                     .then((data) => data.forEach(row => {
+                        console.log(row)
 
                         let tempDiv = document.createElement("div")
                         //tempDiv.innerHTML = answerBoxTemplate(row.title, row.descr, row.imdb_rating)
@@ -78,7 +79,7 @@
                         new Chart(document.getElementById("radar-chart-" + row[4]), {
                             type: 'radar',
                             data: {
-                                labels: ["Epic", "Violent", "Historical", "Regal", "Sneaky", "Dramatic", "Miserable", "Hopeful", "Contemplative", "Mysterious"],
+                                labels: ["Epic", "Tense", "Historical", "Regal", "Sneaky", "Dramatic", "Miserable", "Hopeful", "Contemplative", "Mysterious"],
                                 datasets: [
                                     {
                                         label: row[0],
@@ -88,6 +89,33 @@
                                         pointBorderColor: "#fff",
                                         pointBackgroundColor: "rgba(179,181,198,1)",
                                         data: row[3]
+                                    },
+                                    {
+                                        label: row[5][0][0],
+                                        fill: true,
+                                        backgroundColor: "rgba(245, 127, 39, 0.2)",
+                                        borderColor: "rgba(179,181,198,1)",
+                                        pointBorderColor: "#fff",
+                                        pointBackgroundColor: "rgba(179,181,198,1)",
+                                        data: row[5][0][1]
+                                    },
+                                    {
+                                        label: row[5][1][0],
+                                        fill: true,
+                                        backgroundColor: "rgba(245, 39, 144, 0.2)",
+                                        borderColor: "rgba(245, 39, 144, 0.2)",
+                                        pointBorderColor: "#fff",
+                                        pointBackgroundColor: "rgba(245, 39, 144, .2)",
+                                        data: row[5][1][1]
+                                    },
+                                    {
+                                        label: row[5][2][0],
+                                        fill: true,
+                                        backgroundColor: "rgba(39, 131, 245, 0.2)",
+                                        borderColor: "rgba(39, 131, 245,1)",
+                                        pointBorderColor: "#fff",
+                                        pointBackgroundColor: "rgba(39, 131, 245,.2)",
+                                        data: row[5][2][1]
                                     }
                                 ]
                             },
