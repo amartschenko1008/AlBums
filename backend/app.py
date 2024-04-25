@@ -164,7 +164,7 @@ def get_sim_book(netflix_titles, book_mat):
 
             netflix_vectors.append(normalized_query_vec)
 
-    print(f"\n{netflix_vectors=}\n")
+    # print(f"\n{netflix_vectors=}\n")
 
     avg_vector = np.mean(netflix_vectors, axis=0).reshape(1, -1)
     similarities = cosine_similarity(avg_vector, book_mat)
