@@ -16,6 +16,7 @@
                 <h1 id="google-0-2">Show</h1>
                 <h1 id="google-3">Book</h1>
             </div>
+            <button id="toggleSummaryButton" onclick="toggleSummaryVisibility()">Show/Hide Summary</button>
             <div class="input-box" onclick="sendFocus1()">
                 <img src="{{ url_for('static', filename='images/mag.png') }}" />
                 <input placeholder="Input Your Favourite Netflix Show" id="filter-text-val1"
@@ -38,15 +39,12 @@
     </div>
 
     <script>
-
-        function answerBoxTemplate(title, similarity, summary, chart_num) {
+        function answerBoxTemplate(title, summary, chart_num) {
             return `<div class=''>
                 <h3 class='episode-title'>Title: ${title}</h3>
-                <p class='episode-desc'>Similarity: ${similarity}</p>
                 <p class='episode-desc'>Summary: ${summary}</p>
                 <canvas id="radar-chart-${chart_num}" style="width:100%;max-width500:"></canvas>
             </div>`
-
         }
 
         function sendFocus1() {
@@ -58,11 +56,19 @@
         function sendFocus3() {
             document.getElementById('filter-text-val3').focus()
         }
-
+        function toggleSummaryVisibility() {
+            var summaries = document.querySelectorAll('.episode-desc');
+            for (var i = 0; i < summaries.length; i++) {
+                if (summaries[i].style.display === 'none') {
+                    summaries[i].style.display = 'block';
+                } else {
+                    summaries[i].style.display = 'none';
+                }
+            }
+        }
         function filterText(event) {
             if (event.key === 'Enter' || event.keyCode === 13) {
                 document.getElementById("answer-box").innerHTML = "--- Recommended Books ---"
-                //console.log(document.getElementById("filter-text-val").value)
                 fetch("/episodes?" + new URLSearchParams({
                     title1: document.getElementById("filter-text-val1").value,
                     title2: document.getElementById("filter-text-val2").value,
@@ -73,8 +79,7 @@
                         console.log(row)
 
                         let tempDiv = document.createElement("div")
-                        //tempDiv.innerHTML = answerBoxTemplate(row.title, row.descr, row.imdb_rating)
-                        tempDiv.innerHTML = answerBoxTemplate(row[0], row[1], row[2], row[4])
+                        tempDiv.innerHTML = answerBoxTemplate(row[0], row[2], row[4])
                         document.getElementById("answer-box").appendChild(tempDiv)
                         new Chart(document.getElementById("radar-chart-" + row[4]), {
                             type: 'radar',
@@ -121,8 +126,7 @@
                             },
                             options: {
                                 title: {
-                                    display: false,
-                                    text: 'Distribution in % of world population'
+                                    display: false
                                 }
 
                             }
