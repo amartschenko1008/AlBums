@@ -55,7 +55,7 @@ def json_search(query):
     return matches_filtered_json
 
 
-def build_vectorizer(max_features, stop_words, max_df=0.8, min_df=10, norm="l2"):
+def build_vectorizer(max_features, stop_words, max_df=0.9, min_df=5, norm="l2"):
     vectorizer = TfidfVectorizer(
         max_df=max_df,
         min_df=min_df,
@@ -79,7 +79,7 @@ def title_idx_maker(db, ind):
 book_title_to_idx, book_idx_to_title = title_idx_maker(book_data, "book_title")
 netflix_title_to_idx, netflix_idx_to_title = title_idx_maker(show_data, "title")
 
-n_feats = 10000
+n_feats = 40000
 doc_by_vocab = np.empty([len(book_data), n_feats])
 tfidf_vec = build_vectorizer(n_feats, "english")
 doc_by_vocab = tfidf_vec.fit_transform(
