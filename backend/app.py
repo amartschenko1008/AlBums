@@ -11,6 +11,7 @@ from sklearn.decomposition import TruncatedSVD
 import scipy
 import plotly.express as px
 from sklearn.preprocessing import MinMaxScaler
+import spacy
 
 
 # ROOT_PATH for linking with all your files.
@@ -55,13 +56,39 @@ def json_search(query):
     return matches_filtered_json
 
 
-def build_vectorizer(max_features, stop_words, max_df=0.9, min_df=5, norm="l2"):
+# Code for spacy lemmatization from this link: https://jonathansoma.com/lede/image-and-sound/text-analysis/text-analysis-word-counting-lemmatizing-and-tf-idf/
+spacy_lemma = spacy.load("en_core_web_sm", disable=["parser", "ner"])
+
+
+def lemmatize(text):
+    doc = spacy_lemma(text)
+    # Turn it into tokens, ignoring the punctuation
+    tokens = []
+    for token in doc:
+        if not token.is_punct:
+            if token.pos_ != "PRON":
+                tokens.append(token.lemma_)
+            else:
+                tokens.append(token.orth_)
+
+    """
+    tokens = [
+        token.lemma_ if token.pos_ != "PRON" else token.orth_
+        for token in doc
+        if not token.is_punct
+    ]
+    """
+    return tokens
+
+
+def build_vectorizer(max_features, stop_words, max_df=0.8, min_df=10, norm="l2"):
     vectorizer = TfidfVectorizer(
         max_df=max_df,
         min_df=min_df,
         max_features=max_features,
         stop_words=stop_words,
         norm=norm,
+        tokenizer=lemmatize,
     )
     return vectorizer
 
@@ -79,7 +106,7 @@ def title_idx_maker(db, ind):
 book_title_to_idx, book_idx_to_title = title_idx_maker(book_data, "book_title")
 netflix_title_to_idx, netflix_idx_to_title = title_idx_maker(show_data, "title")
 
-n_feats = 40000
+n_feats = 20000
 doc_by_vocab = np.empty([len(book_data), n_feats])
 tfidf_vec = build_vectorizer(n_feats, "english")
 doc_by_vocab = tfidf_vec.fit_transform(
@@ -105,7 +132,6 @@ zero_to_1_scaler = MinMaxScaler().fit(svd_books)
 
 normalized_book_mat = zero_to_1_scaler.transform(svd_books)
 normalized_netflix_mat = zero_to_1_scaler.transform(svd_netflix)
-
 
 compressed_terms = trained_svd.components_.T
 
